@@ -1,145 +1,26 @@
-# CodexQuota 项目 Agent 规范
+# CodexQuota Agent 规范
 
-## 对话标题
+## 沟通与执行
 
-首次收到明确需求后，使用可用的任务改名能力，将标题修改为“[标签] 内容摘要”。
+默认使用简体中文。先给结论和影响，再给行动与必要证据。首次明确任务将标题设为“[标签] 摘要”，不超过18个汉字。
+开始修改先git status --short，保留用户修改；读取README、CHANGELOG和当前状态。构建或设备操作补读开发指南、构建验证和设备验收文档。搜索优先rg。只在确有独立工作流时委派。
 
-标签从下方列表中选择一个；内容摘要应概括当前主要任务，标题不超过 18 个汉字。
+## 当前产品边界
 
-当用户要求总结当前对话、重新打标签或修改标题时，重新阅读当前对话，根据现阶段的主要内容再次修改标题。允许更换原标签和内容摘要。
+用户于2026-10-14明确要求main仅保留Windows原生软件与黄山派，软件本身去除Android、小米手环、局域网同步和任务Hook功能。旧完整工程已推送到codex/legacy-android-band。不得把旧分支的产品规则重新用于main，不再要求三端版本联动。
 
-只修改标题，不解释改名过程。
+日常链路：Windows额度采集 → 经身份验证和加密的BLE → 黄山派390×450 AMOLED。Windows托盘保留额度、蓝牙同步、刷新、连接说明、开机启动与退出。没有监听端口、手机配对、通知或任务同步。migration.rs只在安装器升级时移除本产品旧Hook注册，并先备份，不能删除其他Hook。
 
-可用标签：[需求] [开发] [UI] [故障] [测试] [发布] [文档] [其他]
+## 数据与隐私
 
-本文件是给未来 AI Agent 的工作入口。开始任何修改前先读本文件；需要了解产品取舍时再读
-`CONTEXT.md` 和 `docs/current-status.md`，需要了解实现细节时读 `docs/architecture.md`，需要执行构建或验收时读
-`docs/development-guide.md`、`docs/build-verification.md` 和 `docs/device-acceptance.md`。
+只传额度摘要、重置时间、数据确认时间和连接状态。令牌只在Windows内存中用于官方额度接口，不进入日志、缓存、蓝牙或诊断。不采集提示词、回复、任务标题、命令、文件路径、账号资料、Cookie或密码。无云中转、遥测、广告和自动崩溃上报。
+不猜缺失额度，不用包接收时间替代官方确认时间，不把缓存冒充实时。套餐窗口不存在与采集未知分别编码；以contract/ble-quota-v2.md为准。
 
-## 1. 项目定位与当前版本
+## 工程与验证
 
-CodexQuota 是一个 Android + Windows + 小米手环 10 的本地额度和任务状态看板：
-
-`ChatGPT Windows Hook → Windows 原生托盘程序 → 局域网加密同步 → Android Codex额度 → 小米运动健康/Wearable SDK → 手环 RPK`
-
-- 当前本地候选版本：`0.6.5`；Android 与手环内部安装序号均为 `607`，用于在不丢失本地数据的情况下覆盖此前版本。最近正式发布版本为 `0.6.4`。
-- 三端当前验收状态、临时版本差异和未决冲突以 `docs/current-status.md` 为唯一摘要；不要从单端
-  构建记录推断三端已经一致。
-- 现有手机桥接只面向 Android；不为 iPhone 增加兼容层，也不把旧 AstroBox 桥接重新放回日常链路。
-- AstroBox 只在首次安装或升级手环 RPK 时临时使用；日常手环连接、健康同步和普通手机通知由小米运动健康保持。
-- Windows、Android APK、手环 RPK 的产品版本号必须一致；协议兼容性由协议版本判断，不能只看产品版本。
-
-完整产品决策以 `CONTEXT.md` 为准；若新需求与其冲突，先向用户确认，不要自行扩大范围。
-
-## 2. 不可违反的产品与隐私边界
-
-- 只传输额度摘要、重置信息、连接状态、同步时间和经过裁剪的任务状态/短标题。
-- 不读取或传输提示词、回复、工具参数、命令、文件路径、完整日志、Cookie、密码或账号内容。唯一例外是：Windows 可在本机读取 Codex 访问令牌，仅向官方额度接口发起低频确认；令牌只驻留进程内存，不写入日志、缓存、诊断或局域网同步，也不传给 Android 或手环。
-- 任务状态只来自已验证的官方 Hook：`PreToolUse/UserPromptSubmit → 处理中`、
-  `PermissionRequest → 需要授权`、`Stop → 等待查看`。不要把“等待查看”改写成“已完成”。
-- Android 任务移除是本机任务板隐藏，不删除 ChatGPT 对话；任务出现新活动后允许自动恢复。
-- 默认通知时机是“仅在 ChatGPT 失焦时”；处理中静默，等待查看和需要授权使用无声、请求振动的通知通道，最终振动方式由手机系统设置决定；手机 App 自身前后台不额外抑制；手机和手环开关独立。
-- 不承诺 Android 被系统杀死后通知必达，不新增常驻前台服务或状态栏通知来掩盖后台限制。
-- 默认只在可信局域网运行，不新增云端中转、公网暴露、遥测、广告或自动崩溃上报。
-- 不把缓存冒充实时数据，不猜测缺失的额度、重置次数或重置后的百分比。
-
-## 3. 代码边界与关键目录
-
-| 目录 | 责任 | 主要技术 |
-| --- | --- | --- |
-| `windows-native/` | Windows 托盘、Hook、额度采集、配对、TLS 1.3 WSS `/pair`/`/sync` | Rust 2024、Tokio、Rustls、Windows API |
-| `android-app/` | 手机看板、配对客户端、WSS 重连、通知决策、手环桥接 | Kotlin、Jetpack Compose、Android SDK、Xiaomi Wearable SDK |
-| `band-app/` | 小米手环 10 快应用和 212×520 页面 | Vela/AIoT UX、JavaScript |
-| `contract/` | 配对、额度、任务、同步流 JSON 契约 | JSON Schema |
-| `docs/` | 架构、ADR、安全、构建和真机验收证据 | Markdown |
-| `src/`、`astrobox-plugin/` | 0.4.0 以前的 Electron/AstroBox 历史实现 | legacy，只作回溯，不进入新架构主流程 |
-
-Android 运行时的主要入口是 `CodexQuotaApplication`、`SyncWebSocketClient`、
-`SyncStreamSession`、`RuntimeStateRepository`、`TaskAlertCoordinator` 和
-`XiaomiWearableBridge`。Windows 的托盘入口是
-`windows-native/src/bin/codex_quota_windows.rs`；Hook 归并和标题索引逻辑在
-`windows-native/src/hook.rs`。手环状态公共逻辑在 `band-app/src/common/`。
-
-## 4. 开始任务时的固定流程
-
-1. 在仓库根目录执行 `git status --short`，保留所有用户已有的修改和未跟踪文件。
-2. 阅读 `README.md`、`CHANGELOG.md`；涉及安全、构建或设备时补读对应文档。
-3. 先定位现有实现和测试，再决定最小修改范围。不要为“看起来更规范”顺手重写无关模块。
-4. 涉及手环 UI 时，先给用户看 212×520 预览；只有用户确认后才能改 RPK 源码和正式构建。
-5. 先写/补测试，再实现；变更完成后运行与变更直接相关的自动测试，并说明真机仍需验证的部分。
-6. 交付时说明改动、测试、真机状态、产物和 Git/发布状态。用户明确说“验收通过”之前不得提交、推送、创建 Release 或上传构建产物。
-
-## 5. UI 设计硬约束
-
-- 开始任何 UI 修改前先读 `docs/ui-design-system.md`，优先复用已有页面骨架、`CodexTokens`、玻璃卡片、状态胶囊和线性图标；不得为新功能另起一套字体、颜色、圆角或间距。
-- Android 的视觉基线是克制、清晰、紧凑：渐变背景、低强度阴影、细描边和 `24dp` 普通卡片圆角。页面只保留页面标题、分组标题、正文、辅助文字四级层次；普通功能不得自行放大字号抢占层级。
-- Android 新页面必须同时检查浅色与深色内容色，所有文字和图标使用主题色，不能依赖默认黑色；页面应遵守状态栏、导航手势区与键盘安全区，主要按钮不得贴住屏幕底部。
-- 状态颜色只表达自身语义：蓝色为处理中和主题操作，绿色为充足、已同步、已完成，黄色为缺少、缓存和中度紧急，红色为警告、离线和需要人工介入。同步新鲜度只看同步胶囊；缓存不得把额度、任务或整个页面一起染黄。
-- 表单必须呈现真实的输入与焦点关系。分位输入从最左侧逐位推进，不得在装饰横线中央叠加系统光标；按钮优先使用现有紧凑样式，并与内容保持可点击的自然距离。
-- Windows 保持托盘优先的轻量原生界面，不照搬手机布局。普通页面只使用标题、正文、辅助文字三档；按钮同高、同圆角、同字重并保证抗锯齿，固定布局必须验证各区域不相交。主程序、安装包、快捷方式和托盘统一使用项目图标。
-- 手环严格遵守 `212×520` 画布、安全区、字号和胶囊边界。涉及手环 UI 时必须先给用户看预览，确认后才能修改 RPK 源码和正式构建。
-- UI 交付不能只报告测试通过：Android 需要按改动范围检查真机浅色/深色、键盘展开/收起和可点击区域；Windows 需要检查实际 DPI 下的窗口与图标。新增页面若无法一眼看出它属于 CodexQuota，视为未完成。
-
-详细颜色、字号、组件和三端落地规则以 `docs/ui-design-system.md` 为准。
-
-## 6. 常用命令
-
-根目录历史/通用测试：
-
-```powershell
-npm install
-npm test
-npm run test:plugin
-npm run build:plugin
-```
-
-Windows 原生：
-
-```powershell
-Set-Location windows-native
-cargo test --workspace
-.\scripts\build-installer.ps1
-.\scripts\test-installer.ps1
-```
-
-正在运行托盘程序时，使用独立 `CARGO_TARGET_DIR` 做测试，避免 EXE 文件锁造成假失败。
-
-Android（PowerShell）：
-
-```powershell
-$env:JAVA_HOME = Join-Path $env:LOCALAPPDATA 'codex-quota-dev\jdk-17'
-$env:ANDROID_HOME = Join-Path $env:LOCALAPPDATA 'Android\Sdk'
-$env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
-..\spikes\android-background-probe\gradlew.bat -p . :app:testDebugUnitTest :app:lintDebug :app:assembleDebug --console=plain
-```
-
-手环：
-
-```powershell
-Set-Location band-app
-npm install
-npm run build
-```
-
-版本、产物 SHA-256 和最近验证结果以 `docs/build-verification.md` 为准；不要把截图里的实时额度当成测试固定值。
-
-## 7. 真机验收和发布规则
-
-- 自动测试不能代替 Windows、Android、手环三端真机验收。
-- 重点验收：首次二维码配对、Hook 事件和任务标题、失焦通知、锁屏/后台连接、手环提醒、离线缓存、重连、任务本机移除、RPK 页面可读性。
-- 用户已配置应用加锁、自启动和电池无限制；测试应使用短时、可重复的场景，不擅自安排长时间测试。
-- 预发布包留在本地；只有用户明确回复“验收通过”后，才可以进入提交、推送和 GitHub Release 流程。
-- 用户明确要求对本地候选进行真机验收时，Agent 负责覆盖安装 Windows 安装包和 Android APK，并将对应 RPK 复制到已通过 ADB 连接的手机 `Download` 目录；手环 RPK 的实际安装仍由用户通过 AstroBox 完成。除非用户另有说明，后续候选沿用此交付方式。
-- 其他手环型号在没有对应真机验收前只能标注为“实验性适配”或“模拟器预览”，不得写成已支持。外部测试反馈只收集型号、应用版本、可复现步骤、可见状态和脱敏截图，不收集设备标识、账号信息或完整日志。
-
-## 8. 处理不确定性
-
-- 不要根据旧对话猜测新的产品语义；如果会改变用户体验、数据边界、协议或日常连接方式，先询问。
-- 不要删除、重置或覆盖混合工作区中的文件。删除行为必须有明确范围和可恢复性说明。
-- 发现文档与代码不一致时，优先修正文档中的事实描述；若代码才是错误来源，先报告再实现修复。
-
-## 9. 黄山派实验性直连
-
-用户已授权新增 Windows → BLE → 黄山派的独立额度显示，不依赖手机。huangshan-app/使用 SiFli SDK、RT-Thread 和 LVGL，标配390×450屏幕；不是RPK。只传额度摘要，令牌仍仅在Windows内存中用于官方确认。只连接已配对设备并要求身份验证和加密。
-
-协议和套餐布局以 contract/ble-quota-v2.md 为准，真机和本地候选状态仍以 docs/current-status.md 为唯一摘要。现有 Android/WSS/手环路径不得顺带删除或改协议。实际覆盖前保留受影响固件区域的可恢复备份，不能整片擦除；未经对应数据/设备验证的功能要说明验证范围。
+windows-native/负责Rust托盘、采集、缓存、BLE及安装器；huangshan-app/负责SiFli/RT-Thread/LVGL固件；docs/负责当前状态、构建和设备证据。SDK只读，不把生成小核镜像、构建目录、原设备备份或凭据加入Git。
+SDK路径和版本见开发指南。构建用MSVC静态运行库；运行中的便携EXE有文件锁时用独立target目录。
+有行为变更补适量测试；不为低影响文案或样式写复述实现的测试。通过直接相关检查后，不重复扩大测试。自动测试不能代替真机，说明验证范围，清理本轮无用临时文件。
+UI先读docs/ui-design-system.md；黄山派按390×450验证文字与触摸区，Windows保持轻量原生托盘。配色按剩余额度阈值，缓存仅改变状态。
+设备覆盖前备份受影响区域，禁止整片擦除和覆盖配对分区。用户已确认黄山派候选测试通过并授权提交、推送、创建Release及发布安装包与固件；后续新的行为变化仍需注明验证范围。
+未获得新任务对应发布授权前，构建留本地。删除范围必须明确且可恢复，不清理用户忽略文件。项目事实以docs/current-status.md为摘要，构建校验见docs/build-verification.md。

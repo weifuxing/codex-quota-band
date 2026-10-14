@@ -1,171 +1,18 @@
 <p align="right"><a href="README.md">简体中文</a></p>
 
-# Codex Quota for Huangshan Pi and Xiaomi Smart Band 10
+# Codex Quota · Huangshan Pi
 
-View **Codex quota and reset times** on Huangshan Pi, or on Android and Xiaomi Smart Band 10. The Android/band path also displays task status.
+Windows → authenticated, encrypted BLE → Huangshan Pi, displaying quota and reset times on the stock390×450 AMOLED without a phone.
 
-<p align="center">
-  <img src="assets/icon.svg" alt="Codex Quota icon" width="96">
-</p>
+Version **0.6.5**. The original Android, Xiaomi band, AstroBox and LAN-sync project is preserved on [codex/legacy-android-band](https://github.com/weifuxing/codex-quota-band/tree/codex/legacy-android-band).
 
-Source candidate: **0.6.5** · Latest published release: **0.6.4**
+Download the Windows installer `CodexQuota-Setup-0.6.5.exe`, firmware `CodexQuota-Huangshan-0.6.5.zip`, and `SHA256SUMS.txt` from [Releases](https://github.com/weifuxing/codex-quota-band/releases).
 
-Choose Windows → encrypted BLE → Huangshan Pi for a phone-free quota display, or Windows → local network → Android → Xiaomi Fitness → Smart Band 10. Huangshan Pi uses the stock 390×450 AMOLED. See [Huangshan Pi direct Bluetooth](#huangshan-pi-direct-bluetooth-experimental); the phone and band requirements below apply to the Android path.
-
-Version `0.6.5` keeps quota freshness driven by Windows-side confirmation, so Android background scheduling is no longer the only refresh source.
-
-[View changelog](CHANGELOG.md)
-
-## 0.6.5 layout previews
-
-<table>
-  <tr>
-    <th align="center">Android home</th>
-    <th align="center">Band home (212×520)</th>
-  </tr>
-  <tr>
-    <td align="center"><img src="docs/band-ui-preview/phone-home-real.jpg" alt="Android five-hour primary quota layout" width="240"></td>
-    <td align="center"><img src="docs/band-ui-preview/five-hour-primary-band.png" alt="Band five-hour primary quota layout" width="180"></td>
-  </tr>
-</table>
-
-## Before you start
-
-Install Xiaomi Fitness on the Android phone and connect Xiaomi Smart Band 10 there first. AstroBox is only used temporarily to sideload or upgrade the RPK; it is not part of the daily sync path.
-
-## Requirements
-
-- A Windows 10/11 x64 computer with Codex installed and in use
-- Xiaomi Smart Band 10
-- An Android phone with Xiaomi Fitness installed and connected to the band
-- The phone and computer connected to the same local network
-
-The current architecture targets Android. AstroBox is used only to sideload or upgrade the band RPK; Xiaomi Fitness keeps the daily band connection.
-
-Building the Android app from source also requires `xms-wearable-lib_1.4_release.aar` from Xiaomi's official developer channel in `android-app/app/libs/`; this third-party SDK is not redistributed here.
-
-### Phone compatibility
-
-- **Windows → Android dashboard**: Any Android 8.0+ phone that can install the APK should work in principle; a Xiaomi phone is not required.
-- **Band sync**: Xiaomi Fitness must be installed and kept running, with Xiaomi Smart Band 10 paired there first. Android phones from other manufacturers may work, but OEM background, autostart, battery, and permission policies can affect continuous sync.
-- **AstroBox**: It is only for sideloading or upgrading the band RPK. It does not replace Xiaomi Fitness for the daily connection. Without Xiaomi Fitness, the phone dashboard can still work, but band sync is not guaranteed.
-- Xiaomi officially lists Android 8.0+ support for Smart Band 10; Xiaomi-only phone features are outside this project's dependency.
-
-## Download
-
-Download all three files from the same version on the [Releases](https://github.com/Vincent-hechuan/codex-quota-band/releases) page:
-
-| Install on | File |
-| --- | --- |
-| Windows computer | `CodexQuota-Setup-0.6.5.exe` |
-| Android phone | `CodexQuota-0.6.5.apk` |
-| Xiaomi Smart Band 10 (AstroBox only for sideloading) | `CodexQuota-0.6.5.rpk` |
-
-All three components should have the same version number.
-
-## Installation
-
-### 1. Install the Windows app
-
-1. Run `CodexQuota-Setup-0.6.5.exe`.
-2. After installation, the app stays in the Windows notification area. If it is hidden, click the `^` icon in the taskbar.
-3. The current test build is not commercially code-signed, so Windows may display an “Unknown publisher” warning. Download only from this repository and verify the SHA-256 value shown on the Release page.
-
-### 2. Install the Android app and band RPK
-
-1. Open AstroBox and enter the page for the connected Xiaomi Smart Band 10.
-2. Import `CodexQuota-0.6.5.rpk` and wait for the upgrade animation.
-3. Install `CodexQuota-0.6.5.apk` on the Android phone.
-4. Exit AstroBox after the upgrade and keep Xiaomi Fitness connected to the band.
-
-## First pairing
-
-1. Make sure the phone and computer are on the same local network.
-2. Right-click the Codex Quota icon in the Windows notification area and select 「连接手机…」 (Connect phone).
-3. On the phone, open CodexQuota → Settings → Connect computer.
-4. Scan with the camera built into CodexQuota, or enter the six-digit pairing code if scanning is unavailable.
-5. For manual pairing, confirm that the `XXXX-XXXX` security code matches on both devices before connecting.
-6. Open 「Codex额度」 on the band. Quota data should appear within a few seconds.
-
-The QR code and six-digit pairing code expire after five minutes and become invalid immediately after one successful use. Manual pairing discovers the computer on the same local network, so users do not enter an IP address.
-
-## Troubleshooting
-
-### Scanning does not open CodexQuota
-
-Use the scanner built into CodexQuota. It does not depend on the phone vendor's system camera. AstroBox is not used for pairing.
-
-### The phone app cannot find Windows
-
-- Confirm that the phone and computer are on the same local network.
-- When the Windows app starts for the first time, allow it through Windows Firewall on private networks.
-- Avoid guest Wi-Fi, public Wi-Fi, and networks with client isolation enabled.
-
-### The band shows offline or stops updating
-
-- Confirm that Xiaomi Fitness is still running in the background and connected to the band.
-- Disable phone-level battery restrictions for Xiaomi Fitness and CodexQuota, and grant Bluetooth/nearby-device permissions.
-- If the phone or Xiaomi Fitness has restarted, open CodexQuota Settings and use “Check band connection” again.
-
-### Only the weekly quota appears after reinstalling Codex, and reset credits show `--`
-
-The weekly quota and available reset credits come from different local Codex data. Reinstalling Codex may preserve the weekly quota source while clearing the network cache that contains reset-credit information.
-
-1. Open the Usage page in the Codex client.
-2. Expand the reset-credit section and wait until its cards are fully displayed.
-3. Right-click the Codex Quota icon in the Windows notification area and select 「立即刷新」 (Refresh now).
-4. Wait about 5–10 seconds, then reopen the band app.
-
-The app keeps the last unexpired reset-credit data while the new cache is unavailable and shows 「缓存」 (Cached). It returns to 「已同步」 (Synced) automatically after Codex recreates the cache.
-
-### Xiaomi Fitness competes for the connection
-
-AstroBox should be closed after the RPK upgrade. If Xiaomi Fitness disconnects repeatedly, adjust the phone's background, autostart, and battery settings so Xiaomi Fitness and CodexQuota can coexist.
-
-## Privacy
-
-- Phone and band data moves only between your Windows computer, phone, and band. This project has no cloud relay; Windows contacts the official ChatGPT/Codex quota endpoint directly when confirming quota.
-- It reads and displays only quota summaries. It does not read or transmit conversations, prompts, project files, or terminal content.
-- It does not read ChatGPT/Codex cookies or passwords. Windows reads the existing local Codex access token only to confirm quota with the official endpoint; the token remains in Windows process memory and never enters logs, caches, diagnostics, the phone, or the band.
-- You can revoke all paired devices from the Windows tray menu at any time.
-- Use it only on a local network you control. Do not expose the Windows service port to the public internet.
-
-## Uninstall
-
-- Windows: uninstall Codex Quota from Settings → Apps → Installed apps.
-- Phone: uninstall the CodexQuota APK from Android Settings.
-- Band: uninstall 「Codex额度」 through AstroBox.
-
-<details>
-<summary>Developer build and test instructions</summary>
-
-Requires Node.js 24+, PowerShell, Rust with the project's Windows toolchain, the Android SDK/JDK, and Xiaomi's Vela quick-app toolchain.
-
-```powershell
-npm install
-npm test
-npm run test:plugin
-Set-Location windows-native
-cargo test --workspace
-
-Set-Location ..\band-app
-npm install
-npm run build
-```
-
-See the [development guide](docs/development-guide.md) for complete build instructions and [docs/security.md](docs/security.md) for the security model.
-
-</details>
-
-## Notice
-
-This is a community open-source project, not an official product of OpenAI, Xiaomi, or AstroBox.
-
-Licensed under the [MIT License](LICENSE).
+Install the Windows app, flash the matching board using the firmware package guide, pair `CodexQuota-HSPI` in Windows Bluetooth settings with the on-screen PIN, and keep the tray Bluetooth sync enabled. The software includes Refresh quota, Bluetooth sync and Startup controls. It has no phone pairing, LAN server, band bridge or task Hook feature.
 
 ## Huangshan Pi direct Bluetooth (experimental)
 
-Windows sends quota summaries over authenticated, encrypted BLE to a paired `CodexQuota-HSPI`. No phone is required. This source candidate has no published Huangshan firmware or Windows installer; existing Release installers do not include this path.
+Windows sends quota summaries over authenticated, encrypted BLE to a paired `CodexQuota-HSPI`. No phone is required. The main branch contains only the Windows software and Huangshan firmware.
 
 <table>
   <tr>
@@ -201,3 +48,8 @@ After installing the SiFli SDK environment, build from the repository root:
 Back up affected flash regions and flash the board-specific bootloader, main and ftab without erasing bonds. Pair `CodexQuota-HSPI` in Windows Bluetooth settings using the six-digit PIN shown on the screen, then run `.\windows-native\scripts\run-huangshan.ps1`. The portable candidate preserves the previous installed app and login startup configuration.
 
 The user has confirmed device testing of the current candidate. The test account only provides a weekly window, so real dual-window touch behavior remains unverified. See the [board guide](huangshan-app/README.md), [BLE contract](contract/ble-quota-v2.md), and [current status](docs/current-status.md).
+
+
+## Privacy
+
+Only quota summaries and reset/connection state are sent to the board. Local Codex access tokens stay in Windows process memory and are used only with official endpoints. No cloud relay, telemetry or automatic crash reporting. Community project, MIT code and OFL fonts; not an official OpenAI or SiFli product.

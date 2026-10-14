@@ -1,12 +1,15 @@
 param(
-    [string]$Version
+    [string]$Version,
+    [string]$Toolchain,
+    [switch]$UseMirror,
+    [string]$MakeNsis
 )
 
 $ErrorActionPreference = "Stop"
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $cargoToml = Join-Path $projectRoot "Cargo.toml"
 $cargo = Join-Path $env:USERPROFILE ".cargo\bin\cargo.exe"
-$makensis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+$makensis = if ($MakeNsis) { $MakeNsis } else { "${env:ProgramFiles(x86)}\NSIS\makensis.exe" }
 $targetRoot = if ($env:CARGO_TARGET_DIR) {
     [IO.Path]::GetFullPath($env:CARGO_TARGET_DIR)
 }
@@ -28,7 +31,12 @@ Push-Location $projectRoot
 $previousRustFlags = $env:RUSTFLAGS
 try {
     $env:RUSTFLAGS = "-C target-feature=+crt-static"
-    & $cargo build --release --bin codex_quota_windows
+    $cargoArgs = @()
+    if ($Toolchain) { $cargoArgs += "+$Toolchain" }
+    if ($UseMirror) {
+        $cargoArgs += @('--config', 'source.crates-io.replace-with="rsproxy"', '--config', 'source.rsproxy.registry="sparse+https://rsproxy.cn/index/"')
+    }
+    & $cargo @cargoArgs build --release --bin codex_quota_windows
     if ($LASTEXITCODE -ne 0) { throw "cargo build failed with exit code $LASTEXITCODE" }
 
     $binary = Join-Path $targetRoot "release\codex_quota_windows.exe"

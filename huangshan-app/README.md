@@ -2,7 +2,7 @@
 
 本地实验性候选，目标是“蓝牙连接 → 显示真实额度 → 断线缓存 → 自动重连”。使用标配 390×450 AMOLED；当前按套餐显示单圈或双圈额度，触摸底部按钮切换主额度；环形进度按各自剩余额度变色，重置时间为 xhxxm / xdxxh。Windows 负责采集，不需要手机端。
 
-这是独立的 SiFli/RT-Thread/LVGL 固件，不是手环 RPK。现有 Android、手环和 WSS 链路仍保留。协议见 [BLE Quota v2](../contract/ble-quota-v2.md)。
+这是独立的 SiFli/RT-Thread/LVGL 固件，不是手环 RPK。main仅保留Windows与黄山派；旧手机/手环链路见codex/legacy-android-band分支。协议见 [BLE Quota v2](../contract/ble-quota-v2.md)。
 
 ## 界面预览
 
@@ -39,7 +39,7 @@ python .\huangshan-app\tools\generate_font.py --sdk D:\UGit\OpenSiFli\sifli-sdk
 
 新增托盘开关“黄山派蓝牙同步”，开关状态在应用数据目录保存；启用后连接已配对设备。使用 `--huangshan-ble` 可为当前进程启用，`--ble-probe` 只检查适配器、配对和 GATT 服务。
 
-本机原配置的 gnullvm 工具链未安装，原型使用已安装的 MSVC 工具链。build.rs 同时支持原有 windres 和 Windows SDK rc.exe，不修改原来的 Rust 工具链声明。直接候选 EXE 不等于安装包。
+本机原配置的 gnullvm 工具链未安装，原型使用已安装的 MSVC 工具链。build.rs支持Windows SDK rc.exe，main默认MSVC工具链。直接候选 EXE 不等于安装包。
 
 ## 首次连接
 

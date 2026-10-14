@@ -6,7 +6,7 @@ RequestExecutionLevel user
 !define MUI_ICON "..\assets\app-icon.ico"
 !define MUI_UNICON "..\assets\app-icon.ico"
 !define MUI_FINISHPAGE_RUN "$INSTDIR\CodexQuota.exe"
-!define MUI_FINISHPAGE_RUN_TEXT "完成后启动 Codex额度并打开新手引导"
+!define MUI_FINISHPAGE_RUN_TEXT "完成后启动 Codex额度并显示黄山派连接说明"
 !define MUI_FINISHPAGE_RUN_FUNCTION "LaunchCodexQuota"
 
 !ifndef APP_VERSION
@@ -71,9 +71,9 @@ Section "Install"
   CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\CodexQuota.exe"
   CreateShortcut "$SMPROGRAMS\${APP_NAME}\卸载 ${APP_NAME}.lnk" "$INSTDIR\Uninstall.exe"
 
-  ; Keep hook installation in the same user-level install flow. This is
-  ; idempotent and preserves other products' hooks in hooks.json.
-  ExecWait '"$INSTDIR\CodexQuota.exe" --install-hooks'
+  ; Remove only this product's retired Hooks, preserving a local backup.
+  ExecWait '"$INSTDIR\CodexQuota.exe" --migrate-legacy-setup'
+
 SectionEnd
 
 Section "Uninstall"

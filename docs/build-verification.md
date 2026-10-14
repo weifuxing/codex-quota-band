@@ -1,126 +1,20 @@
-# 构建与验证
+# 构建与验证 · 0.6.5
 
-本文件只保留正式发布包和当前待验收候选的验证结论与校验值。逐次开发、调试和设备环境记录不随公开仓库保留。
-
-## 0.6.5 本地候选（未发布）
-
-三端产品版本统一为 `0.6.5`；安卓手机和手环内部安装序号均为 `607`。三端显示名称统一为「Codex额度」，交付文件名统一使用 `CodexQuota`。
-
-| 组件 | 自动验证 | 当前本地产物 | SHA-256 | 当前状态 |
-| --- | --- | --- | --- | --- |
-| Windows | Rust workspace 80/80，`cargo fmt --check`，Release 静态运行库构建、图标检查与最小系统 PATH 独立启动 | `CodexQuota-Setup-0.6.5.exe`（3,029,976 bytes） | `CDC52E2D59D00B73DDD78C7349890971624784FE7614B93DB54C810A9B4AB909` | 已覆盖安装并启动，系统显示 `Codex额度 0.6.5` |
-| 安卓手机 | 单元测试、Lint、Release 构建与包内版本检查 | `CodexQuota-0.6.5.apk`（24,614,921 bytes） | `6022A5E5191813F1E6F20F12E99D044DEC3C37105920544126FBEC57CE542BCA` | 已保留数据覆盖安装，系统报告 `0.6.5` / `607` |
-| 小米手环 10 | RPK Release 构建，36/36 | `CodexQuota-0.6.5.rpk`（50,240 bytes） | `3C7938D5235082FCDF82BCB7122ABCBA1F5A7C2C7597DA53095002A1725BE2A6` | 已复制到手机 `Download`，等待用户安装 |
-
-0.6.5 尚未完成三端真机验收，也未提交、推送或创建 GitHub Release。
-
-## 0.6.4 正式发布包
-
-三端产品版本声明统一为 `0.6.4`；安卓手机和手环 `versionCode` 均为 `606`。手环协议和布局不变，仅同步两分钟新鲜度阈值；现有 `0.6.3` RPK 与新版 Windows、安卓手机兼容，不强制老用户重装。
-
-| 组件 | 自动验证 | 当前本地产物 | SHA-256 | 真机状态 |
-| --- | --- | --- | --- | --- |
-| Windows | Rust workspace 80/80，`cargo fmt --check`，Release 静态运行库构建、图标检查与最小系统 PATH 独立启动 | `Codex-Quota-Setup-0.6.4.exe`（3,030,027 bytes） | `AC05240729B09AD5AF1C2E52D35BF179D598C02BEBDDA005FF95BA37717497F3` | 已覆盖安装；安装后 EXE 与构建文件散列一致；手机停止 52 秒期间仍由 Windows 在第 45 秒完成官方确认 |
-| 安卓手机 | 单元测试 113/113，Lint，Release 构建 | `CodexQuota-0.6.4.apk`（24,614,917 bytes） | `26A0103B95AB79C054EA504B60B8D1A7DE429106678A3857673601E13AF959F1` | 已保留数据覆盖安装；系统报告 `0.6.4` / `606`，加密连接与官方确认已自动恢复 |
-| 小米手环 10 | RPK Release 构建，28/28 | `com.codex.quota.android.release.0.6.4.rpk`（50,070 bytes） | `7008DFDC6F162F9FBD98AB8BA5FEDE8E1CD19909211A9BAFB621D90DF1038A5F` | 业务页面和协议兼容；用户已确认现有 RPK 同步正常，因此不要求覆盖安装 |
-
-现场隔离验证中，手机 App 停止前最后确认时间为 `18:40:48Z`；手机停止后 Windows 于 `18:41:33Z` 独立完成下一次确认，证明官方额度实时性不再依赖 Android 后台定时任务。恢复手机 App 后 WSS 自动重连，并于 `18:41:58Z` 再次确认成功。根目录契约测试 43/43。三个附件的 GitHub 远端大小和 SHA-256 已与本地逐项核对；`0.6.4` 已正式发布。
-
-## 0.6.3 正式发布包
-
-三端产品版本声明已统一为 `0.6.3`；安卓手机和手环 `versionCode` 均为 `605`。以下文件已完成自动验证、候选交付与三端真机联动验收。
-
-| 组件 | 自动验证 | 当前本地产物 | SHA-256 | 真机状态 |
-| --- | --- | --- | --- | --- |
-| Windows | Rust workspace 79/79，`cargo fmt --check`，Release 静态运行库构建，应用图标检查，最小系统 PATH 独立启动，PE 导入表检查 | `Codex-Quota-Setup-0.6.3.exe`（3,033,046 bytes） | `4694A051465E23264B3A2B31D310C31088B70079112E5169267B8551E742B2FF` | 已覆盖安装；安装后 EXE 与构建文件散列一致，托盘与联动验收通过 |
-| 安卓手机 | 单元测试 113/113，Lint，Release 构建，包内版本检查 | `app-release.apk`（24,614,921 bytes） | `0381A9A778C39C182A0A3208CCF148BEC8C8427E9D83B8AFB113192BF41D99F6` | 已保留数据覆盖安装；系统报告 `0.6.3` / `605`，启动、同步与提醒验收通过 |
-| 小米手环 10 | RPK Release 构建，28/28 | `com.codex.quota.android.release.0.6.3.rpk`（50,064 bytes） | `A32C6AC984812E5281A412BAF21A4D9C1F8A9486A35542107311477BB65D46C1` | RPK 已安装；额度、任务、连接与提醒联动验收通过 |
-| 根目录契约 | Node 测试 43/43 | — | — | — |
-
-Windows 成品的导入表只包含 Windows 10/11 自带的系统 DLL/API Set；不包含 `libunwind.dll`、`libgcc.dll`、`libwinpthread.dll`、`VCRUNTIME*.dll` 或 `MSVCP*.dll`。独立启动检查会清空开发环境变量，只保留 Windows 系统目录，防止开发者电脑上的工具链掩盖缺失依赖。
-
-安卓 APK 已覆盖安装到真机，系统报告 `versionName=0.6.3`、`versionCode=605`；安装后应用正常启动，未清除原有配对和设置数据。Windows 安装包已覆盖安装并启动；安装后的主程序与本次构建文件 SHA-256 一致。手环 RPK 已完成安装，Windows、安卓手机和小米手环 10 的本轮真机联动验收均已通过。
-
-`0.6.3` 已完成三端真机验收并正式发布。
-
-## 0.6.2 正式发布包
-
-三端产品版本统一为 `0.6.2`；安卓手机和手环 `versionCode` 均为 `604`。以下文件已完成自动验证与三端真机验收。
-
-| 组件 | 自动验证 | 当前本地产物 | SHA-256 |
-| --- | --- | --- | --- |
-| Windows | Rust workspace 74/74，`cargo fmt --check`，Release 构建，最小系统 PATH 独立启动检查，PE 导入表检查 | `Codex-Quota-Setup-0.6.2.exe`（2,944,298 bytes） | `F58C2D547C9D3CC80DCC9F1D92F6F43FE61EAAE503D626FA9DAB3FAF5D53D3C9` |
-| 安卓手机 | 单元测试 107/107，Lint，Debug/Release 构建 | `app-release.apk`（1,781,326 bytes） | `8D3894449C29843B7B52BAD1CA108A53ED91BA171165E68FC3C093A722599BA2` |
-| 小米手环 10 | RPK Release 构建，28/28 | `com.codex.quota.android.release.0.6.2.rpk`（50,070 bytes） | `B234D9B0DB93F52B60E06F51D9A6E1874E72584F3F8153BFD3C64B8CDEBF3F5F` |
-| 根目录契约 | Node 测试 42/42 | — | — |
-
-Windows 成品的导入表只包含 Windows 10/11 自带的系统 DLL/API Set，不包含 `libunwind.dll`、`libgcc.dll`、`libwinpthread.dll`、`VCRUNTIME*.dll` 或 `MSVCP*.dll`。安装目录仅有主程序和卸载程序；覆盖安装后主程序与本次构建文件的 SHA-256 一致，并已成功启动。
-
-安卓 APK 已覆盖安装到真机，系统报告 `versionName=0.6.2`、`versionCode=604`。手环 RPK 已完成安装，Windows、安卓手机和小米手环 10 的本轮真机验收均已通过。
-
-## 0.6.0 正式发布包
-
-三端产品版本统一为 `0.6.0`；安卓手机和手环 `versionCode` 均为 `600`。
-
-| 组件 | 自动验证 | 当前本地产物 | SHA-256 |
-| --- | --- | --- | --- |
-| Windows | Rust workspace 72/72，`cargo fmt --check` | `Codex-Quota-Setup-0.6.0.exe`（2,938,619 bytes） | `D6D36A2CC54D808F08B5B33690DEE051C9A78755737D23AABA9BFA0676C17AD3` |
-| 安卓手机 | 单元测试 95/95，Lint，Release 构建 | `app-release.apk`（1,764,942 bytes） | `90D9C16CE67144086B8DD20AAFD24D1A38026C9F5512A9D64F9204E0DCCE5BB9` |
-| 小米手环 10 | RPK Release 构建，27/27 | `com.codex.quota.android.release.0.6.0.rpk`（50,257 bytes） | `6E267BE8BA9BD2A18668A9FB2EBE36AC4E6EE9D5614458E574C842A89761858E` |
-| 根目录契约 | Node 测试 42/42 | — | — |
-
-安卓 APK 使用固定发布签名；签名材料和小米 Wearable SDK 二进制均不随仓库分发。
-
-## 真机结论
-
-Windows 安装、手机与电脑配对、额度和任务同步、手机后台缓存语义、手环数据同步、两页纵向切换、5 小时额度和周额度进度条均已通过人工验收。
-
-`0.6.0` 已于 2026-07-29 在 GitHub Releases 发布。
-
-## 0.6.1 正式发布包
-
-`0.6.1` 包含手机到手环断线重连修复，以及 Android 端 Wearable 异步刷新结果乱序导致的错误“手环未连接”状态修复。小米服务短暂滞后时，手机会最多进行三次短暂重试。产品版本保持 `0.6.1`；Android 内部安装序号为 `602`，仅用于在不卸载、不丢失配对数据的情况下覆盖此前本地候选。
-
-| 组件 | 自动验证 | 当前本地产物 | SHA-256 |
-| --- | --- | --- | --- |
-| Windows | Rust workspace 72/72，`cargo fmt --check`，安装包构建 | `Codex-Quota-Setup-0.6.1.exe`（2,937,972 bytes） | `08FB93CC2353681863BDD5C6B9D596C31A83C02EF54502A5576F8027ADBF2B86` |
-| 安卓手机 | 单元测试 100/100，Lint，Release 构建 | `app-release.apk`（1,764,942 bytes） | `F71030E84C23BA1FF6DD7C791D2B5B37F0C2E374B60DA8F932EB5BCCD1C9AB71` |
-| 小米手环 10 | RPK Release 构建，27/27 | `com.codex.quota.android.release.0.6.1.rpk`（50,263 bytes） | `84E7FD0AD63AF214B300D17DBDAC409434DAE8F7AA36D5545B8FCDEE95FAC7EE` |
-| 根目录契约 | Node 测试 42/42 | — | — |
-
-Windows 安装包的隔离安装/卸载 smoke test 没有执行：脚本检测到当前用户已有 Codex额度安装，按保护规则拒绝覆盖。Windows 与 Android 的覆盖安装已按用户授权成功完成；手环 RPK 没有重建、传输或安装，本次 Release 沿用已验收的 0.6.1 RPK。
-
-## 黄山派环形 UI 本地候选（2026-10-14）
-
-Windows便携EXE与板端固件为实验性本地候选，BLE协议版本2，未生成新的Windows安装包。Windows workspace 94/94、板端状态/布局/颜色/倒计时测试、固件构建及便携EXE最小系统PATH启动检查通过；COM4刷写启用回读校验，用户确认仅周额度单圈页面正常。
+2026-10-14：main为Windows＋黄山派；旧Android/手环工程及历史验证记录位于codex/legacy-android-band。固件沿用已验收字节，Windows重新构建。
 
 | 产物 | 字节 | SHA-256 |
 | --- | --- | --- |
-| Windows | 7278592 | `926A993B589937E04160BFC0A54E1A497A598BB7B11D280EC298ADE873DE285D` |
-| main | 787344 | `D9F8471D3D3653B4FC2466E42CD9AEFADAB03F96F966490C3B35F5313F189457` |
-| ftab | 11288 | `D4DF3AE1AE11995E5F3B6CF56745B4181D37DB30D0D0E858FB7D913FE2655A22` |
-| bootloader | 58544 | `9A79DF767876E9561EA60FA0BB9BD4123397A28E77A61928B225826BE03CA233` |
+| CodexQuota-Setup-0.6.5.exe | 2090955 | 5D87E08A182FE15E3921E484E22734A932A3195849B1A2EF19B2D9D1231A4D5D |
+| 安装包内CodexQuota.exe | 4486144 | 1777334DDAAABF7E11E600188540B0853786027B7909A430F0F79F6B7C7F5BA4 |
+| CodexQuota-Huangshan-0.6.5.zip | 568498 | 4F160B8BE1C653EE8D8F957A76EE66A70E70CE6E02D2C55A00D56C0859AF75A9 |
+| main.bin | 827704 | CC9CE2DF1EAB78C71C5AF0AC77D0C43FB6502C079142A43C830F92804B122D69 |
+| ftab.bin | 11288 | 3145CB3DD6E64DEC8A2B137BADF280E542E1873A83610FAC97CAA4716536AA47 |
+| bootloader.bin | 58544 | 9A79DF767876E9561EA60FA0BB9BD4123397A28E77A61928B225826BE03CA233 |
 
-原系统配对保留；旧Windows安装和登录启动配置未替换。双圈触摸尚未用真实双窗口数据完成设备验收。未提交、推送或发布。
+Windows Rust30项（额度/套餐17、迁移3、BLE10）通过，无编译警告；板端C状态、缓存、布局、倒计时、颜色、OLED计时和位移测试通过。图标资源检查、最小PATH独立启动通过。7-Zip从安装包提取EXE，其SHA-256与构建文件一致。NSIS在正常主机环境打包；受限环境32位工具无法启动，已在主机环境完成。
 
-## 黄山派 KEY2 布局切换候选（2026-10-14）
+实际运行新便携候选：菜单为黄山派状态、数据新鲜度、两项额度、BLE开关、刷新、连接说明、开机启动和退出。进程入站监听数为0。没有手机配对与手环入口。原安装仍在，故不运行会覆盖现有安装的隔离安装/卸载脚本；原安装与登录启动指向未替换。新版便携候选已启动。
 
-板端布局循环及原有缓存/颜色/倒计时测试通过；固件构建、COM4刷写回读校验和原配对自动恢复通过。用户确认KEY2两次切换正常。Windows及BLE协议没有改动，本次无需重建Windows。
+固件此前通过COM4回读校验及用户真机验收。配对、单圈、KEY2布局和OLED保护已确认；账号不含5小时窗口，真实双窗口触摸待对应套餐验证。Flash.ps1做PowerShell语法检查，包内镜像与已验收散列相符；本次没有重复刷写或测量面板寿命/电流。
 
-| 产物 | 字节 | SHA-256 |
-| --- | --- | --- |
-| main | 826936 | `CEC5420E9C087DC5065C63786CBDB8F79ECDF77114163E4261D2047C584585C3` |
-| ftab | 11288 | `E5C64B9D644386AFBD516069DC1B06595F8AF57E8AFAFC469BB4C194CE501690` |
-
-候选仍仅在本地，未提交、推送或发布。
-
-## 黄山派 OLED 保护候选（2026-10-14）
-
-板端C测试、固件构建和COM4刷写回读校验通过。新增180秒离线息屏策略、手动唤醒重计时、连接恢复/配对保持显示及9个位移点边界测试。SDK保持未修改。Windows与BLE协议未改动。
-
-| 产物 | 字节 | SHA-256 |
-| --- | --- | --- |
-| main | 827704 | `CC9CE2DF1EAB78C71C5AF0AC77D0C43FB6502C079142A43C830F92804B122D69` |
-| ftab | 11288 | `3145CB3DD6E64DEC8A2B137BADF280E542E1873A83610FAC97CAA4716536AA47` |
-
-真机摘要确认正常收包、brightness=30、断线初期on=1且缓存保留。此前COM4消失由用户临时拔下USB造成；2026-10-14用户确认“测试过了可以”，当前OLED保护与唤醒候选通过用户真机复核，并授权源码提交推送。brightness是提交给驱动的设置值；没有测量面板电流、光学亮度或寿命。息屏为全黑加亮度0，保留触摸供电，非LCD关电或整板休眠。没有创建新的Release。
+发布说明见releases/0.6.5.md；附件含SHA256SUMS.txt。原设备备份、账号、配对数据、SDK、构建日志不加入公开源码或Release。
