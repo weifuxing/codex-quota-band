@@ -17,12 +17,14 @@ This file records user-visible changes in each public version. Release dates fol
 
 ### 改进 / Changed
 
+- 新增实验性 Windows → BLE → 黄山派额度显示，无需手机；支持套餐单/双圈、KEY2布局切换、缓存与自动重连。
+- 黄山派新增纯黑背景、30%亮度、每分钟±2px位移、断线3分钟息屏，以及触摸、KEY2和有效蓝牙数据唤醒。
 - Windows、安卓手机和小米手环统一使用显示名称「Codex额度」。
 - 统一本地交付文件名：`CodexQuota-Setup-0.6.5.exe`、`CodexQuota-0.6.5.apk`、`CodexQuota-0.6.5.rpk`。
 
 ### 状态 / Status
 
-- 本地候选版本，尚未提交、推送或发布 GitHub Release。
+- 源码候选；黄山派已通过用户真机测试，真实双窗口触摸仍待对应套餐验证。尚未发布新的 GitHub Release。
 
 ## [0.6.4] - 2026-08-13
 

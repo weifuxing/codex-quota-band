@@ -73,6 +73,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn unavailable_payload() -> SyncPayload {
     SyncPayload {
         quota: QuotaSnapshot {
+            window_presence: codex_quota_windows_core::QuotaWindowPresence::default(),
             protocol_version: 1,
             generated_at: "2026-07-24T00:00:00Z".to_string(),
             source_status: QuotaSourceStatus::Unavailable,

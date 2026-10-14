@@ -8,6 +8,40 @@ fn main() {
         return;
     }
 
+    if env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc") {
+        let kits = PathBuf::from(
+            env::var_os("ProgramFiles(x86)").expect("Windows SDK requires ProgramFiles(x86)"),
+        )
+        .join("Windows Kits/10/bin");
+        let mut versions = std::fs::read_dir(kits)
+            .expect("Windows SDK is required")
+            .filter_map(Result::ok)
+            .map(|entry| entry.path())
+            .collect::<Vec<_>>();
+        versions.sort();
+        let rc = versions
+            .into_iter()
+            .rev()
+            .map(|path| path.join("x64/rc.exe"))
+            .find(|path| path.is_file())
+            .expect("Windows SDK rc.exe is required");
+        let output = PathBuf::from(env::var_os("OUT_DIR").expect("OUT_DIR is set by Cargo"))
+            .join("codex_quota_resources.res");
+        let status = Command::new(rc)
+            .arg("/nologo")
+            .arg("/fo")
+            .arg(&output)
+            .arg("app.rc")
+            .status()
+            .expect("rc.exe is required to embed the Windows application icon");
+        assert!(status.success(), "rc.exe failed to compile app.rc");
+        println!(
+            "cargo:rustc-link-arg-bin=codex_quota_windows={}",
+            output.display()
+        );
+        return;
+    }
+
     let output = PathBuf::from(env::var_os("OUT_DIR").expect("OUT_DIR is set by Cargo"))
         .join("codex_quota_resources.o");
     let status = Command::new("windres")

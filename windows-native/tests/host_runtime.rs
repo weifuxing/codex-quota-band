@@ -51,6 +51,7 @@ async fn host_reuses_identity_and_builds_a_closed_android_pairing_link() {
 fn unavailable_payload() -> SyncPayload {
     SyncPayload {
         quota: QuotaSnapshot {
+            window_presence: codex_quota_windows_core::QuotaWindowPresence::default(),
             protocol_version: 1,
             generated_at: "2026-07-24T00:00:00Z".to_string(),
             source_status: QuotaSourceStatus::Unavailable,

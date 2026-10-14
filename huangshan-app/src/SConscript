@@ -1,0 +1,5 @@
+from building import *
+import os
+cwd = GetCurrentDir()
+group = DefineGroup('CodexQuotaHSPI', Glob('*.c'), depend = [], CPPPATH = [cwd])
+Return('group')

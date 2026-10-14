@@ -26,6 +26,7 @@ fn server_hello_negotiates_transport_and_nested_contract_versions() {
 #[test]
 fn combined_snapshot_contains_only_the_two_minimized_nested_contracts() {
     let quota = QuotaSnapshot {
+        window_presence: codex_quota_windows_core::QuotaWindowPresence::default(),
         protocol_version: 1,
         generated_at: "2026-07-24T08:00:00Z".to_string(),
         source_status: QuotaSourceStatus::Ok,

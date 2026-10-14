@@ -1,0 +1,8 @@
+project/build_*/
+project/.sconsign.dblite
+project/.config
+project/rtconfig.h
+project/cconfig.h
+__pycache__/
+*.pyc
+src/lcpu_img.c

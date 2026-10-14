@@ -213,6 +213,7 @@ fn sample_payload() -> SyncPayload {
         .as_millis() as i64;
     SyncPayload {
         quota: QuotaSnapshot {
+            window_presence: codex_quota_windows_core::QuotaWindowPresence::default(),
             protocol_version: 1,
             generated_at: "2026-07-24T08:00:00Z".to_string(),
             source_status: QuotaSourceStatus::Ok,

@@ -1,7 +1,8 @@
 use crate::{
     CodexLinkStatus, ComputerLinkStatus, QuotaLink, QuotaSnapshot, QuotaSourceStatus, QuotaWindow,
-    QuotaWindowStatus, ResetInventoryItem, ResetInventorySnapshot, ResetInventoryStatus,
-    ResetItemStatus, UpstreamDatasetFreshness, UpstreamFreshness, UpstreamFreshnessStatus,
+    QuotaWindowPresence, QuotaWindowStatus, ResetInventoryItem, ResetInventorySnapshot,
+    ResetInventoryStatus, ResetItemStatus, UpstreamDatasetFreshness, UpstreamFreshness,
+    UpstreamFreshnessStatus,
 };
 use brotli::Decompressor;
 use chrono::{DateTime, SecondsFormat, Utc};
@@ -144,6 +145,8 @@ pub struct DirectResetInventory {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DirectUsageSnapshot {
+    #[serde(default)]
+    pub window_presence: QuotaWindowPresence,
     pub schema_version: u8,
     pub fetched_at: String,
     pub windows: Vec<QuotaWindow>,
@@ -374,56 +377,69 @@ impl QuotaCollector {
             None
         };
         let reset_inventory = self.read_reset_inventory(now)?;
-        let (windows, limits_collected_at, codex_link) = if let Some(direct) = direct_usage {
-            let link = if matches!(
-                upstream_freshness.usage.status,
-                UpstreamFreshnessStatus::Current
-            ) {
-                CodexLinkStatus::Ok
-            } else {
-                CodexLinkStatus::Stale
-            };
-            (direct.windows, Some(direct.fetched_at), link)
-        } else if let Some(response) = usage {
-            let rate_limit = response.body.get("rate_limit");
-            let windows = rate_limit
-                .and_then(|value| value.as_object())
-                .map(|rate_limit| {
-                    [
-                        ("primary", rate_limit.get("primary_window")),
-                        ("secondary", rate_limit.get("secondary_window")),
-                    ]
-                    .into_iter()
-                    .filter_map(|(slot, value)| {
-                        value.and_then(|value| normalize_window(slot, value, now))
+        let (windows, limits_collected_at, codex_link, window_presence) =
+            if let Some(direct) = direct_usage {
+                let link = if matches!(
+                    upstream_freshness.usage.status,
+                    UpstreamFreshnessStatus::Current
+                ) {
+                    CodexLinkStatus::Ok
+                } else {
+                    CodexLinkStatus::Stale
+                };
+                (
+                    direct.windows,
+                    Some(direct.fetched_at),
+                    link,
+                    direct.window_presence,
+                )
+            } else if let Some(response) = usage {
+                let rate_limit = response.body.get("rate_limit");
+                let windows = rate_limit
+                    .and_then(|value| value.as_object())
+                    .map(|rate_limit| {
+                        [
+                            ("primary", rate_limit.get("primary_window")),
+                            ("secondary", rate_limit.get("secondary_window")),
+                        ]
+                        .into_iter()
+                        .filter_map(|(slot, value)| {
+                            value.and_then(|value| normalize_window(slot, value, now))
+                        })
+                        .collect::<Vec<_>>()
                     })
-                    .collect::<Vec<_>>()
-                })
-                .unwrap_or_default();
-            let codex_link = if rate_limit.is_some_and(Value::is_object) {
-                CodexLinkStatus::Ok
+                    .unwrap_or_default();
+                let codex_link = if rate_limit.is_some_and(Value::is_object) {
+                    CodexLinkStatus::Ok
+                } else {
+                    CodexLinkStatus::FormatChanged
+                };
+                (
+                    windows,
+                    Some(format_timestamp(response.cached_at)),
+                    codex_link,
+                    classify_window_presence(rate_limit),
+                )
+            } else if let Some(response) = session {
+                let windows = response
+                    .rate_limits
+                    .into_iter()
+                    .flat_map(|(slot, value)| normalize_legacy_window(&slot, &value, now))
+                    .collect::<Vec<_>>();
+                (
+                    windows,
+                    Some(format_timestamp(response.collected_at)),
+                    CodexLinkStatus::Ok,
+                    QuotaWindowPresence::default(),
+                )
             } else {
-                CodexLinkStatus::FormatChanged
+                (
+                    Vec::new(),
+                    None,
+                    CodexLinkStatus::Unavailable,
+                    QuotaWindowPresence::default(),
+                )
             };
-            (
-                windows,
-                Some(format_timestamp(response.cached_at)),
-                codex_link,
-            )
-        } else if let Some(response) = session {
-            let windows = response
-                .rate_limits
-                .into_iter()
-                .flat_map(|(slot, value)| normalize_legacy_window(&slot, &value, now))
-                .collect::<Vec<_>>();
-            (
-                windows,
-                Some(format_timestamp(response.collected_at)),
-                CodexLinkStatus::Ok,
-            )
-        } else {
-            (Vec::new(), None, CodexLinkStatus::Unavailable)
-        };
         let has_source = !matches!(codex_link, CodexLinkStatus::Unavailable);
         let source_status = if matches!(
             upstream_freshness.usage.status,
@@ -446,6 +462,7 @@ impl QuotaCollector {
             QuotaSourceStatus::Unavailable
         };
         Ok(QuotaSnapshot {
+            window_presence,
             protocol_version: 1,
             generated_at: format_timestamp(now),
             source_status,
@@ -908,6 +925,7 @@ fn fetch_direct_usage(
     .filter_map(|(slot, value)| value.and_then(|value| normalize_window(slot, value, now)))
     .collect();
     Ok(DirectUsageSnapshot {
+        window_presence: classify_window_presence(body.get("rate_limit")),
         schema_version: 1,
         fetched_at: format_timestamp(now),
         windows,
@@ -1467,6 +1485,7 @@ mod tests {
         save_direct_usage(
             &usage_path,
             &DirectUsageSnapshot {
+                window_presence: QuotaWindowPresence::default(),
                 schema_version: 1,
                 fetched_at: format_timestamp(now),
                 windows: vec![QuotaWindow {
@@ -1509,6 +1528,7 @@ mod tests {
             .unwrap()
             .with_timezone(&Utc);
         let snapshot = QuotaSnapshot {
+            window_presence: crate::QuotaWindowPresence::default(),
             protocol_version: 1,
             generated_at: format_timestamp(now),
             source_status: QuotaSourceStatus::Ok,
@@ -1606,5 +1626,76 @@ mod tests {
 
     fn cache_address(kind: u32, file: u32, start: usize) -> u32 {
         0x8000_0000 | (kind << 28) | (file << 16) | start as u32
+    }
+}
+
+#[cfg(test)]
+mod window_presence_tests {
+    use super::*;
+    use serde_json::json;
+    #[test]
+    fn weekly_only_response_marks_five_hour_not_applicable() {
+        let value =
+            json!({"primary_window":null,"secondary_window":{"limit_window_seconds":604800}});
+        let p = classify_window_presence(Some(&value));
+        assert_eq!(p.five_hour, Some(false));
+        assert_eq!(p.weekly, Some(true));
+    }
+    #[test]
+    fn both_windows_are_supported_independently_of_slots() {
+        let value = json!({"primary_window":{"limit_window_seconds":604800},"secondary_window":{"limit_window_seconds":18000}});
+        let p = classify_window_presence(Some(&value));
+        assert_eq!(p.five_hour, Some(true));
+        assert_eq!(p.weekly, Some(true));
+    }
+    #[test]
+    fn invalid_or_empty_responses_never_claim_no_limit() {
+        for value in [
+            json!({}),
+            json!({"primary_window":{},"secondary_window":{"limit_window_seconds":604800}}),
+            json!({"primary_window":{"limit_window_seconds":18001}}),
+        ] {
+            assert_eq!(
+                classify_window_presence(Some(&value)),
+                QuotaWindowPresence::default()
+            );
+        }
+        assert_eq!(
+            classify_window_presence(None),
+            QuotaWindowPresence::default()
+        );
+    }
+    #[test]
+    fn old_direct_cache_has_unknown_catalog() {
+        let old = r#"{"schemaVersion":1,"fetchedAt":"2026-10-14T10:00:00Z","windows":[]}"#;
+        let cache: DirectUsageSnapshot = serde_json::from_str(old).unwrap();
+        assert_eq!(cache.window_presence, QuotaWindowPresence::default());
+    }
+}
+
+fn classify_window_presence(rate_limit: Option<&Value>) -> QuotaWindowPresence {
+    let Some(rate_limit) = rate_limit.and_then(Value::as_object) else {
+        return QuotaWindowPresence::default();
+    };
+    let mut minutes = Vec::new();
+    for key in ["primary_window", "secondary_window"] {
+        let Some(value) = rate_limit.get(key).filter(|value| !value.is_null()) else {
+            continue;
+        };
+        let Some(seconds) = value
+            .get("limit_window_seconds")
+            .and_then(Value::as_u64)
+            .filter(|value| *value > 0 && *value % 60 == 0)
+        else {
+            return QuotaWindowPresence::default();
+        };
+        minutes.push(seconds / 60);
+    }
+    if minutes.is_empty() {
+        return QuotaWindowPresence::default();
+    }
+    QuotaWindowPresence {
+        five_hour: Some(minutes.contains(&300)),
+        weekly: Some(minutes.contains(&10080)),
     }
 }

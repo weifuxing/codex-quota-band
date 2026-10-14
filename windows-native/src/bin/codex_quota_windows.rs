@@ -2,6 +2,7 @@
 #![allow(unsafe_op_in_unsafe_fn)]
 
 use chrono::{SecondsFormat, Utc};
+use codex_quota_windows_core::ble::native::BleWorker;
 use codex_quota_windows_core::foreground::chatgpt_is_foreground;
 use codex_quota_windows_core::hook::{
     HookDiagnosticOutcome, HookDiagnosticStore, HookEventSpool, HookTaskRuntime, merge_hook_config,
@@ -52,6 +53,7 @@ const MENU_EXIT: u32 = 1004;
 const MENU_REPAIR_HOOK: u32 = 1005;
 const MENU_REFRESH_STATUS: u32 = 1006;
 const MENU_DIAGNOSTICS: u32 = 1007;
+const MENU_HUANGSHAN_BLE: u32 = 1008;
 const DIAGNOSTICS_REFRESH_TIMER: usize = 1;
 const UPSTREAM_CONFIRMATION_INTERVAL: std::time::Duration = std::time::Duration::from_secs(45);
 const MAX_RAW_HOOK_EVENT_BYTES: u64 = 256 * 1024;
@@ -99,6 +101,8 @@ static APP: OnceLock<Arc<AppController>> = OnceLock::new();
 static PAIRING_WINDOWS: OnceLock<Mutex<HashMap<isize, PairingWindowData>>> = OnceLock::new();
 
 struct AppController {
+    ble: BleWorker,
+    ble_setting_path: PathBuf,
     runtime: Arc<Runtime>,
     host: Mutex<Option<WindowsHost>>,
     quota_task: Mutex<Option<JoinHandle<()>>>,
@@ -108,6 +112,14 @@ struct AppController {
 }
 
 impl AppController {
+    fn toggle_ble(&self) -> Result<(), String> {
+        let enabled = !self.ble.enabled();
+        std::fs::write(&self.ble_setting_path, if enabled { b"1" } else { b"0" })
+            .map_err(|_| "无法保存黄山派蓝牙设置".to_string())?;
+        self.ble.set_enabled(enabled);
+        Ok(())
+    }
+
     fn active_connections(&self) -> usize {
         self.host
             .lock()
@@ -195,6 +207,7 @@ impl AppController {
     }
 
     fn shutdown(&self) {
+        self.ble.stop();
         if let Some(task) = self.quota_task.lock().ok().and_then(|mut task| task.take()) {
             task.abort();
             let _ = self.runtime.block_on(task);
@@ -242,6 +255,10 @@ struct PairingWindowBottomLayout {
 
 fn main() {
     let arguments = std::env::args().collect::<Vec<_>>();
+    if arguments.iter().any(|argument| argument == "--ble-probe") {
+        println!("{}", codex_quota_windows_core::ble::native::probe());
+        return;
+    }
     if arguments.iter().any(|argument| argument == "--smoke-test") {
         let result = unsafe {
             load_tray_icon().map(|icon| {
@@ -345,7 +362,16 @@ fn run(show_onboarding: bool) -> Result<(), String> {
             hooks_config_path()?.with_file_name("session_index.jsonl"),
         ),
     );
+    let ble_setting_path = data_directory.join("huangshan-ble-enabled-v1");
+    let ble_enabled = std::env::args().any(|argument| argument == "--huangshan-ble")
+        || std::fs::read(&ble_setting_path)
+            .ok()
+            .is_some_and(|value| value == b"1");
+    let ble = BleWorker::start(quota_state.clone(), ble_enabled)
+        .map_err(|_| "无法启动黄山派蓝牙线程".to_string())?;
     APP.set(Arc::new(AppController {
+        ble,
+        ble_setting_path,
         runtime,
         host: Mutex::new(Some(host)),
         quota_task: Mutex::new(Some(quota_task)),
@@ -593,6 +619,9 @@ unsafe fn show_tray_menu(window: HWND) {
         0,
         &format!("额度 {upstream_label}"),
     );
+    if let Some(app) = APP.get() {
+        append_menu(menu, MF_STRING | MF_DISABLED, 0, app.ble.status().label());
+    }
     for label in quota_labels {
         append_menu(menu, MF_STRING | MF_DISABLED, 0, &label);
     }
@@ -610,6 +639,16 @@ unsafe fn show_tray_menu(window: HWND) {
         } else {
             "刷新当前状态"
         },
+    );
+    append_menu(
+        menu,
+        if APP.get().is_some_and(|app| app.ble.enabled()) {
+            MF_STRING | MF_CHECKED
+        } else {
+            MF_STRING
+        },
+        MENU_HUANGSHAN_BLE as usize,
+        "黄山派蓝牙同步",
     );
     append_menu(menu, MF_STRING, MENU_PAIR as usize, "连接手机…");
     append_menu(menu, MF_STRING, MENU_DIAGNOSTICS as usize, "连接与诊断…");
@@ -651,6 +690,13 @@ unsafe fn show_tray_menu(window: HWND) {
     PostMessageW(window, WM_NULL, 0, 0);
     DestroyMenu(menu);
     match command {
+        MENU_HUANGSHAN_BLE => {
+            if let Some(app) = APP.get() {
+                if let Err(error) = app.toggle_ble() {
+                    show_message("黄山派蓝牙同步", &error, MB_ICONERROR);
+                }
+            }
+        }
         MENU_PAIR => show_pairing_from_app(),
         MENU_REVOKE => {
             let confirmed = MessageBoxW(
@@ -2589,6 +2635,7 @@ fn ensure_default_startup_enabled() -> Result<(), String> {
 fn unavailable_payload() -> SyncPayload {
     SyncPayload {
         quota: QuotaSnapshot {
+            window_presence: codex_quota_windows_core::QuotaWindowPresence::default(),
             protocol_version: 1,
             generated_at: Utc::now().to_rfc3339_opts(SecondsFormat::Millis, true),
             source_status: QuotaSourceStatus::Unavailable,

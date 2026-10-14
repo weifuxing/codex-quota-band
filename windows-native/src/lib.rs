@@ -1,5 +1,6 @@
 //! Privacy-bounded core for the native Codex额度 Windows client.
 
+pub mod ble;
 pub mod foreground;
 pub mod hook;
 pub mod host;
@@ -348,6 +349,9 @@ impl Default for UpstreamFreshness {
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QuotaSnapshot {
+    /// Local-only source evidence; not added to existing WSS contracts.
+    #[serde(skip)]
+    pub window_presence: QuotaWindowPresence,
     pub protocol_version: u8,
     pub generated_at: String,
     pub source_status: QuotaSourceStatus,
@@ -1081,6 +1085,7 @@ mod quota_v2_tests {
     #[test]
     fn quota_v2_exposes_card_timing_without_card_identity_or_title() {
         let snapshot = QuotaSnapshot {
+            window_presence: crate::QuotaWindowPresence::default(),
             protocol_version: 1,
             generated_at: "2026-07-26T10:00:00.000Z".to_string(),
             source_status: QuotaSourceStatus::Ok,
@@ -1117,4 +1122,11 @@ mod quota_v2_tests {
         let v3 = serde_json::to_string(&QuotaSnapshotV3::from(&snapshot)).unwrap();
         assert!(v3.contains("upstreamFreshness"));
     }
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QuotaWindowPresence {
+    pub five_hour: Option<bool>,
+    pub weekly: Option<bool>,
 }

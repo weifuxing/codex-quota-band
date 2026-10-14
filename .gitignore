@@ -55,3 +55,6 @@ spikes/**/PROTOTYPE-*
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Local Huangshan BLE build outputs
+windows-native/target-huangshan/
