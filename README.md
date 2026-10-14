@@ -213,6 +213,23 @@ AstroBox 可以退出。
 
 黄山派通过已配对、经身份验证和加密的 BLE 连接电脑，日常使用无需 Android 或小米运动健康。当前为源码候选，尚未提供正式发布的黄山派固件或 Windows 安装包；现有 Release 安装包不包含这条新链路。
 
+### 运行界面
+
+<table>
+  <tr>
+    <th align="center">仅周额度 · 单圈</th>
+    <th align="center">双额度 · 同心环</th>
+    <th align="center">双额度 · 数据行</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/huangshan-ui/weekly-concentric.png" alt="黄山派仅周额度单圈界面，重置时间位于环内" width="230"></td>
+    <td align="center"><img src="docs/huangshan-ui/dual-concentric.png" alt="黄山派同心双环界面，外圈5小时额度、内圈周额度，底部可触摸选择" width="230"></td>
+    <td align="center"><img src="docs/huangshan-ui/dual-rows.png" alt="黄山派双环和数据行界面，分别显示两项额度与重置时间" width="230"></td>
+  </tr>
+</table>
+
+以上为 390×450 界面的示例数据预览，非真机拍摄；实际数值由套餐和同步结果决定。KEY2 切换同心环与数据行布局；当前账号的单圈界面已通过真机验证，双窗口触摸仍待对应套餐验证。
+
 ### 显示与操作
 
 - 套餐只有周额度时显示单圈，同时提供 5 小时和周额度时显示同心双环；未知数据与套餐不适用分别处理。

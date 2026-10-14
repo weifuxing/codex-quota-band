@@ -4,6 +4,14 @@
 
 这是独立的 SiFli/RT-Thread/LVGL 固件，不是手环 RPK。现有 Android、手环和 WSS 链路仍保留。协议见 [BLE Quota v2](../contract/ble-quota-v2.md)。
 
+## 界面预览
+
+| 仅周额度 | 同心双环 | 环形图＋数据行 |
+| --- | --- | --- |
+| ![单圈周额度](../docs/huangshan-ui/weekly-concentric.png) | ![同心双环](../docs/huangshan-ui/dual-concentric.png) | ![双环与数据行](../docs/huangshan-ui/dual-rows.png) |
+
+图片使用示例数据，非真机照片；实际屏幕为390×450。KEY2切换布局，双窗口时触摸选择中央额度。单圈已完成真机验证，双窗口触摸仍待对应套餐验证。
+
 ## 构建
 
 本机 SDK 位于 `D:\UGit\OpenSiFli\sifli-sdk`。构建产物在 `project/build_sf32lb52-lchspi-ulp_hcpu/`，SDK 本身不作修改。

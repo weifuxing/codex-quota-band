@@ -167,6 +167,21 @@ Licensed under the [MIT License](LICENSE).
 
 Windows sends quota summaries over authenticated, encrypted BLE to a paired `CodexQuota-HSPI`. No phone is required. This source candidate has no published Huangshan firmware or Windows installer; existing Release installers do not include this path.
 
+<table>
+  <tr>
+    <th align="center">Weekly only</th>
+    <th align="center">Concentric rings</th>
+    <th align="center">Rings with data rows</th>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/huangshan-ui/weekly-concentric.png" alt="Huangshan Pi weekly-only ring with reset time inside" width="230"></td>
+    <td align="center"><img src="docs/huangshan-ui/dual-concentric.png" alt="Five-hour outer ring and weekly inner ring with touch selection" width="230"></td>
+    <td align="center"><img src="docs/huangshan-ui/dual-rows.png" alt="Two quota rings with separate percentage and reset-time rows" width="230"></td>
+  </tr>
+</table>
+
+These are 390×450 interface previews with sample data, not device photographs. Actual values depend on the plan and sync results. KEY2 switches layouts. The weekly-only interface has been verified on the device; real dual-window touch behavior still needs a matching plan.
+
 - Weekly-only plans show one ring; plans with both windows show two rings. Missing data and a window absent from the plan are handled separately.
 - Remaining quota is red below 20%, yellow at 20–49%, and green at 50% or above. Reset times use `xhxxm` for five-hour windows and `xdxxh` for weekly windows.
 - Short-press KEY2 to switch between concentric rings and rings with data rows. Touch selects the central quota when both windows are available. Boot defaults to concentric rings.
