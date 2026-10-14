@@ -1,6 +1,6 @@
 # 当前状态
 
-更新时间：2026-10-14。版本0.6.5，发布准备中。
+更新时间：2026-10-14。Windows＋黄山派0.6.5已[正式发布](https://github.com/weifuxing/codex-quota-band/releases/tag/v0.6.5)。附件为Windows安装包、黄山派固件ZIP与SHA256SUMS.txt，远端大小及SHA-256与本地一致。
 
 main仅维护Windows原生软件和黄山派固件；旧Android/手环/局域网工程已完整推送到codex/legacy-android-band（f25205e）。删除只涉及Git跟踪文件，忽略的本机SDK、构建缓存和旧产物仍保留在本地。
 
